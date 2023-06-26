@@ -1,0 +1,86 @@
+<aside>
+  <div class="company-name">
+    <a href="/">
+    <img src="../img/logo.png">
+  </a>
+  </div>
+  <div class="user">
+    <p>Welcome, <%= user.username %><i class="bi bi-caret-down-fill"></i></p>
+  </div>
+  <div class="menu">
+      <a href="/">
+        <span><i class="bi bi-speedometer2"></i></span>
+        <span class="link">Dashboard</span>
+      </a>
+      <a href="/myForm">
+        <span><i class="bi bi-card-list"></i></span>
+        <span class="link">My Form</span>
+      </a>
+      <a href="/profil">
+        <span><i class="bi bi-person-fill"></i></span>
+        <span class="link">Profil</span>
+      </a>
+      <a href="/logout">
+        <span><i class="bi bi-box-arrow-left"></i></span>
+        <span class="link">Logout</span>
+      </a>
+  </div>
+</aside>
+<div class="wrapper-detail-form mb-5">
+  <div class="blog-detail">
+    <div class="enroll-key-wrapper-myform">
+      enroll key : <span class="key"><%= form.enroll_key %></span>
+    </div>
+    <h1 class="blog-title">
+      <%= form.title %>
+    </h1>  
+    <div class="blog-meta">
+      <p class="blog-date"><%= moment(form.created_at).format('LL') %></p>
+    </div>
+    <div class="blog-description">
+      <p><%= form.description %></p>
+    </div>
+    <a href="/myForm" class="btn" style="background:#12CBC4;color:white;">
+      &laquo Back
+    </a>
+  </div>
+</div>
+<div class="container-myForm">
+  <div class="title">
+    Respondents
+  </div>
+  <table class="table-myForm">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Uploaded file</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% respondents.forEach(respondent => { %>
+        <tr>
+          <td><%= respondent.username %></td>
+          <td>
+            <%
+            var fileName = respondent.uploaded_file;
+            var result = fileName.substring(fileName.indexOf('-') + 1);
+            %>
+            <%= result %>
+          </td>
+          <td>Submitted</td>
+          <td>
+          <span><%= moment(respondent.created_at).format('dddd, D MMMM YYYY') %></span>
+          <span><%= moment(respondent.created_at).format('HH:mm') %></span>
+          </td>
+          <td>
+            <a href="/download/<%= respondent.user_id %>/<%= respondent.form_id %>" class="btn-download-submit">Download</a>
+          </td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>
+

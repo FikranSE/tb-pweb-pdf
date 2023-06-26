@@ -1,0 +1,56 @@
+<aside>
+  <div class="company-name">
+    <a href="/">
+    <img src="../img/logo.png">
+  </a>
+  </div>
+  <div class="user">
+    <% if (user.avatar) { %>
+      <img src="./img/<%= user.avatar %>" width="100" height="100">
+    <% } else { %>
+      <img src="./img/boy.png" width="100" height="100">
+    <% } %>
+    <p>Welcome, <%= user.username %><i class="bi bi-caret-down-fill"></i></p>
+  </div>
+  <div class="menu">
+      <a href="/">
+        <span><i class="bi bi-speedometer2"></i></span>
+        <span class="link">Dashboard</span>
+      </a>
+      <a href="/myForm">
+        <span><i class="bi bi-card-list"></i></span>
+        <span class="link">My Form</span>
+      </a>
+      <a href="/profil">
+        <span><i class="bi bi-person-fill"></i></span>
+        <span class="link">Profil</span>
+      </a>
+      <a href="/logout">
+        <span><i class="bi bi-box-arrow-left"></i></span>
+        <span class="link">Logout</span>
+      </a>
+  </div>
+</aside>
+<div class="container container-upload w-70">
+  <form class="form-upload" action="/add-form" method="POST">
+    <!-- <div class="mb-3">
+      <label for="judul" class="form-label">user_id</label>
+      <input name="user_id" type="text" class="form-control" required>
+    </div> -->
+    <div class="mb-3">
+      <label for="judul" class="form-label">Judul</label>
+      <input name="title" type="text" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="deskripsi" class="form-label">Deskripsi</label>
+      <textarea name="description" class="form-control" rows="3" required></textarea>
+    </div>
+    <button 
+    style="
+    text-decoration:none;
+    background-color: #12CBC4; 
+    color: #fff;
+    "type="submit" class="btn">Submit</button>
+  </form>
+</div>
+

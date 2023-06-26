@@ -1,0 +1,84 @@
+<aside>
+  <div class="company-name">
+    <a href="/">
+    <img src="../img/logo.png">
+  </a>
+  </div>
+  <div class="user">
+    <% if (user.avatar) { %>
+      <img src="./img/<%= user.avatar %>" width="100" height="100">
+    <% } else { %>
+      <img src="./img/boy.png" width="100" height="100">
+    <% } %>
+    <p>Welcome, <%= user.username %><i class="bi bi-caret-down-fill"></i></p>
+  </div>
+  <div class="menu">
+      <a href="/">
+        <span><i class="bi bi-speedometer2"></i></span>
+        <span class="link">Dashboard</span>
+      </a>
+      <a href="/myForm">
+        <span><i class="bi bi-card-list"></i></span>
+        <span class="link">My Form</span>
+      </a>
+      <a href="/profil">
+        <span><i class="bi bi-person-fill"></i></span>
+        <span class="link">Profil</span>
+      </a>
+      <a href="/logout">
+        <span><i class="bi bi-box-arrow-left"></i></span>
+        <span class="link">Logout</span>
+      </a>
+  </div>
+</aside>
+
+<% if (successMessage) { %>
+  <figure class="notification_success">
+    <div class="notification_body">
+      <i class="bi bi-check-circle notification_icon"></i>
+      Your form has been created &#128640;
+    </div>
+  </figure>
+<% } else if (errorMessage) { %> 
+  <figure class="notification_fail">
+    <div class="notification_body">
+      <i class="bi bi-x-circle notification_icon"></i>
+      Your form failed to be created 
+    </div>
+  </figure>
+<% } %>
+<!-- Button trigger modal -->
+<a href="/add-form" style="text-decoration:none;background-color: #12CBC4; color: #fff;"  class="btn btn-add-form" >
+  <i style="font-size: 18px;" class="bi bi-plus"></i> Tambahkan Form
+</a>
+
+<div class="wrapper-postingan">
+  <% forms.forEach(form => { %>
+  <a href="/detail-form/<%= form.form_id %>" class="postingan">
+      <div class="top">
+        <div class="judul">
+          <p class="judul-form">
+            <%= form.title %>
+          </p>
+       </div>
+        <div class="deskripsi">
+          <%= form.description %>
+        </div>
+      </div>
+      <div class="bottom">
+        <div class="pengguna">
+          <div class="pic-uploader">
+            <% if (form.avatar) { %>
+              <img src="./img/<%= form.avatar %>" width="100" height="100">
+            <% } else { %>
+              <img src="./img/boy.png" width="100" height="100">
+            <% } %>
+          </div>
+          <div class="nama-uploader">
+            <span class="nama"><%= form.username %> </span><span> <%= moment(form.created_at).format('LL') %></span>
+          </div>
+        </div>
+      </div>
+    </a>
+  <% }); %>
+</div>
