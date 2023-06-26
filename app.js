@@ -1,3 +1,4 @@
+require("dotenv").config();
 const fs = require('fs');
 const express = require('express')
 const mysql = require('mysql2')
@@ -53,9 +54,10 @@ app.use(flash());
 
 // create the connection to database
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  database: 'db_pweb_a_kel_fikran'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
 });
 
 //database connection
