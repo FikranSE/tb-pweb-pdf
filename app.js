@@ -120,7 +120,7 @@ app.post('/register', function (req, res) {
       if (err) throw err;
 
       // insert user to database
-      const sqlInsert = 'INSERT INTO users (email, username, password) VALUES (?, ?, ?)';
+      const sqlInsert = 'INSERT INTO users (email, username, password, active) VALUES (?, ?, ?, 0)';
       const values = [email, username, hash];
       db.query(sqlInsert, values, (err, result) => {
         if (err) throw err;
