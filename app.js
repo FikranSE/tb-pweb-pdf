@@ -51,6 +51,18 @@ app.use(session({
 // Middleware flash messages
 app.use(flash());
 
+// Create multer storage configuration
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+
+// Create multer upload configuration
+const upload = multer({ storage: storage });
 
 // create the connection to database
 const db = mysql.createConnection({
@@ -66,7 +78,9 @@ db.connect((err)=>{
 })
 
 const saltRounds = 10;
-
+//=======================================================================================================================
+//                                                    FIKRAN
+//=======================================================================================================================
 //register dan login
 app.get('/register', function (req, res) {
   const errorMessage = req.session.errorMessage;
@@ -82,13 +96,13 @@ app.get('/register', function (req, res) {
 })
 
 app.post('/register', function (req, res) {
-  const { username, password, confirm_password } = req.body;
+  const { email, username, password, confirm_password } = req.body;
 
   // check if username already exists
   const sqlCheck = 'SELECT * FROM users WHERE username = ?';
   db.query(sqlCheck, username, (err, result) => {
     if (err) throw err;
-
+      console.log("tes");
     if (result.length > 0) {
       console.error({ message: 'Username sudah terdaftar', err });
       req.session.errorMessage = 'Username sudah terdaftar';
@@ -106,8 +120,8 @@ app.post('/register', function (req, res) {
       if (err) throw err;
 
       // insert user to database
-      const sqlInsert = 'INSERT INTO users (username, password) VALUES (?, ?)';
-      const values = [username, hash];
+      const sqlInsert = 'INSERT INTO users (email, username, password) VALUES (?, ?, ?)';
+      const values = [email, username, hash];
       db.query(sqlInsert, values, (err, result) => {
         if (err) throw err;
         console.log({ message: 'Registrasi berhasil', values });
@@ -134,7 +148,6 @@ app.get('/login', function (req, res) {
 
 app.post('/login', function (req, res) {
   const { username, password } = req.body;
-
   const sql = 'SELECT * FROM users WHERE username = ?';
   db.query(sql, [username], function(err, result) {
     if (err) {
@@ -142,7 +155,6 @@ app.post('/login', function (req, res) {
       req.session.errorMessage = 'Internal Server Error';
       return res.redirect('/login');
     }
-
     if (result.length === 0) {
       console.error({ message: 'Username atau Password salah!!', err });
       req.session.errorMessage = 'Username atau Password salah!!';
@@ -169,18 +181,11 @@ app.post('/login', function (req, res) {
       const token = jwt.sign({ user_id: user.user_id }, 'secret_key');
       res.cookie('token', token, { httpOnly: true });
 
-      // req.session.successMessage = 'Login berhasil';
-
       console.log({ message: 'Login Berhasil', user });
       return res.redirect('/');
     });
   });
 });
-
-
-
-
-
 
 // logout
 app.get('/logout', function(req, res) {
@@ -190,9 +195,7 @@ app.get('/logout', function(req, res) {
 
 // middleware untuk memeriksa apakah user sudah login atau belum
 function requireAuth(req, res, next) {
-  
   const token = req.cookies.token;
-
   if (!token) {
     res.redirect('/login');
     return;
@@ -209,53 +212,6 @@ function requireAuth(req, res, next) {
     next();
   });
 }
-
-
-
-//ganti password
-app.post('/ganti-password', requireAuth, (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-  const userId = req.user_id;
-
-  // Check if current password matches with database
-  const sql = 'SELECT password FROM users WHERE user_id = ?';
-  db.query(sql, [userId], (err, result) => {
-    if (err) {
-      console.log({ message: 'Internal Server Error', err });
-      
-    }
-
-    const hashedPassword = result[0].password;
-    bcrypt.compare(currentPassword, hashedPassword, (error, isMatch) => {
-      if (error) {
-        console.log({ message: 'Internal Server Error', err });
-      }
-
-      if (isMatch) {
-        // If current password matches, hash new password and update database
-        bcrypt.hash(newPassword, saltRounds, (err, hashedNewPassword) => {
-          if (err) {
-            console.log({ message: 'Internal Server Error', err });
-          }
-
-          const updateSql = 'UPDATE users SET password = ? WHERE user_id = ?';
-          const values = [hashedNewPassword, userId];
-          db.query(updateSql, values , (err, result) => {
-            if (err) {
-              console.log({ message: 'Internal Server Error', err });
-            }
-            console.log({ message: 'Password berhasil diubah', values });
-            res.redirect('/');
-          });
-        });
-      } else {
-        // If current password doesn't match, send error message
-        console.log({ message: 'Invalid current password', err });
-        res.redirect('/profil');
-      }
-    });
-  });
-});
 
 // index page
 app.get('/', requireAuth, function (req, res) {
@@ -302,7 +258,15 @@ app.get('/', requireAuth, function (req, res) {
   });
 });
 
-
+// Function to generate enroll key with specified length
+function generateEnrollKey(length) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let enrollKey = '';
+  for (let i = 0; i < length; i++) {
+    enrollKey += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return enrollKey;
+}
 
 app.post('/enroll', requireAuth, function (req, res) {
   const enroll_key = req.body.enroll_key;
@@ -359,14 +323,6 @@ app.post('/enroll', requireAuth, function (req, res) {
   });
 });
 
-
-
-
-
-
-
-
-
 //add-form page
 app.get('/add-form', requireAuth, function (req, res) {
   let user_id = req.user_id;
@@ -380,45 +336,6 @@ app.get('/add-form', requireAuth, function (req, res) {
     });
   });
 })
-
-// Function to generate enroll key with specified length
-function generateEnrollKey(length) {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let enrollKey = '';
-  for (let i = 0; i < length; i++) {
-    enrollKey += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return enrollKey;
-}
-
-// add form post
-app.post('/add-form', requireAuth, function (req, res) {
-  
-  const user_id = req.user_id;
-  const title = req.body.title;
-  const description = req.body.description;
-
-  // Validasi apakah title tidak kosong
-  // if (title > 0) {
-  //   console.log({ message: 'Title cannot be empty' });
-  //   req.session.errorMessage = 'Title cannot be empty';
-  //   return res.redirect('/add-form');
-  // }
-  // Generate enroll key
-  const enrollKey = generateEnrollKey(6); 
-
-  const sql = 'INSERT INTO forms (user_id, title, description,enroll_key) VALUES (?, ?, ?, ?)';
-  const values = [user_id, title, description,enrollKey];
-  db.query(sql, values, (err, result) => {
-    if (err) {
-      throw err;
-    }
-    console.log({ message: 'Form berhasil dibuat', values });
-    req.session.successMessage = 'Form berhasil dibuat';
-    res.redirect('/');
-  });
-});
-
 
 //detail form
 app.get('/detail-form/:form_id', requireAuth, function(req, res) {
@@ -570,56 +487,6 @@ app.get('/download/:user_id/:form_id', requireAuth, (req, res) => {
   });
 });
 
-
-
-
-// Create multer storage configuration
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-
-// Create multer upload configuration
-const upload = multer({ storage: storage });
-
-// Handle file upload
-app.post('/upload', upload.single('uploaded_file'), requireAuth, (req, res) => {
-  
-  const { form_id,description } = req.body;
-  const uploaded_file = req.file.filename;
-
-  const user_id = req.user_id;
-
-  // Check if user has already submitted for the form
-  const submissionSql = `SELECT * FROM submissions WHERE user_id = ? AND form_id = ?`;
-  const submissionValues = [user_id, form_id];
-  db.query(submissionSql, submissionValues, (err, submissionResult) => {
-    if (err) {
-      throw err;
-    }
-
-    // Insert data to MySQL
-    const insertSql = `INSERT INTO submissions (user_id, form_id, uploaded_file, description) VALUES (?, ?, ?, ?)`;
-    const insertValues = [user_id, form_id, uploaded_file, description];
-    db.query(insertSql, insertValues, (err, result) => {
-      if (err) {
-        throw err;
-      }
-      console.log({ message: 'Submission complete!', insertValues });
-    res.redirect('/');
-    });
-  });
-});
-
-
-
-
-
-
 //download file pada detail pengumuman
 app.get('/download/:user_id/:form_id', requireAuth, (req, res) => {
   const userId = req.params.user_id;
@@ -656,8 +523,6 @@ app.get('/download/:user_id/:form_id', requireAuth, (req, res) => {
   });
 });
 
-
-
 //profil page
 app.get('/profil', requireAuth, function (req, res) {
   let user_id = req.user_id;
@@ -678,31 +543,6 @@ app.get('/profil', requireAuth, function (req, res) {
   })
 })
 
-
-//upload avatar dan email
-// Handle file upload
-app.post('/edit-profil', upload.single('avatar'), requireAuth, (req, res) => {
-  let user_id = req.user_id;
-  const { email } = req.body;
-  const avatar = req.file.filename;
-
-  // Insert data to MySQL
-  const updateUserSql = `UPDATE users SET email=?, avatar=? WHERE user_id=${user_id}`;
-  const values = [email, avatar];
-  db.query(updateUserSql, values, (err, result) => {
-    if (err) {
-      throw err;
-    }
-    console.log('Data inserted to MySQL!');
-    // Copy file to img directory
-    const source = path.join(__dirname, 'uploads', avatar);
-    const destination = path.join(__dirname, 'assets', 'img', avatar);
-    fs.copyFileSync(source, destination);
-
-    res.redirect('/profil');
-  });
-});
-
 //edit user page
 app.get('/edit-profil',requireAuth, function (req, res) {
   let user_id = req.user_id;
@@ -716,12 +556,145 @@ app.get('/edit-profil',requireAuth, function (req, res) {
     });
   });
 })
+//=========================================================================================================================
+
+//=======================================================================================================================
+//                                                    ILHAM
+//=======================================================================================================================
+
+// Handle file upload
+app.post('/submit-form', upload.single('uploaded_file'), requireAuth, (req, res) => {
+  
+  const { form_id,description } = req.body;
+  const uploaded_file = req.file.filename;
+
+  const user_id = req.user_id;
+
+  // Check if user has already submitted for the form
+  const submissionSql = `SELECT * FROM submissions WHERE user_id = ? AND form_id = ?`;
+  const submissionValues = [user_id, form_id];
+  db.query(submissionSql, submissionValues, (err, submissionResult) => {
+    if (err) {
+      throw err;
+    }
+
+    // Insert data to MySQL
+    const insertSql = `INSERT INTO submissions (user_id, form_id, uploaded_file, description) VALUES (?, ?, ?, ?)`;
+    const insertValues = [user_id, form_id, uploaded_file, description];
+    db.query(insertSql, insertValues, (err, result) => {
+      if (err) {
+        throw err;
+      }
+      console.log({ message: 'Submission complete!', insertValues });
+    res.redirect('/');
+    });
+  });
+});
+
+
+//ganti password
+app.post('/ganti-password', requireAuth, (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.user_id;
+
+  // Check if current password matches with database
+  const sql = 'SELECT password FROM users WHERE user_id = ?';
+  db.query(sql, [userId], (err, result) => {
+    if (err) {
+      console.log({ message: 'Internal Server Error', err });
+      
+    }
+
+    const hashedPassword = result[0].password;
+    bcrypt.compare(currentPassword, hashedPassword, (error, isMatch) => {
+      if (error) {
+        console.log({ message: 'Internal Server Error', err });
+      }
+
+      if (isMatch) {
+        // If current password matches, hash new password and update database
+        bcrypt.hash(newPassword, saltRounds, (err, hashedNewPassword) => {
+          if (err) {
+            console.log({ message: 'Internal Server Error', err });
+          }
+
+          const updateSql = 'UPDATE users SET password = ? WHERE user_id = ?';
+          const values = [hashedNewPassword, userId];
+          db.query(updateSql, values , (err, result) => {
+            if (err) {
+              console.log({ message: 'Internal Server Error', err });
+            }
+            console.log({ message: 'Password berhasil diubah', values });
+            res.redirect('/');
+          });
+        });
+      } else {
+        // If current password doesn't match, send error message
+        console.log({ message: 'Invalid current password', err });
+        res.redirect('/profil');
+      }
+    });
+  });
+});
+
+//=====================================================================================================================================
 
 
 
 
 
 
+
+
+
+
+
+//=======================================================================================================================
+//                                                    DIO
+//=======================================================================================================================
+// Handle file upload
+app.post('/edit-profil', upload.single('avatar'), requireAuth, (req, res) => {
+  let user_id = req.user_id;
+  const { email } = req.body;
+  const avatar = req.file.filename;
+
+  // Insert data to MySQL
+  const updateUserSql = `UPDATE users SET email=?, avatar=? WHERE user_id=${user_id}`;
+  const values = [email, avatar];
+  db.query(updateUserSql, values, (err, result) => {
+    if (err) {
+      throw err;
+    }
+    console.log({msg:'data profil telah diupdate'},values);
+    // Copy file to img directory
+    const source = path.join(__dirname, 'uploads', avatar);
+    const destination = path.join(__dirname, 'assets', 'img', avatar);
+    fs.copyFileSync(source, destination);
+
+    res.redirect('/profil');
+  });
+});
+
+// add form post
+app.post('/add-form', requireAuth, function (req, res) {
+  const user_id = req.user_id;
+  const title = req.body.title;
+  const description = req.body.description;
+
+  // Generate enroll key
+  const enrollKey = generateEnrollKey(6); 
+
+  const sql = 'INSERT INTO forms (user_id, title, description, enroll_key) VALUES (?, ?, ?, ?)';
+  const values = [user_id, title, description,enrollKey];
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      throw err;
+    }
+    console.log({ message: 'Form berhasil dibuat', values });
+    req.session.successMessage = 'Form berhasil dibuat';
+    res.redirect('/');
+  });
+});
 
 app.listen(port,()=>{
   console.log(`listening on port ${port}`)
