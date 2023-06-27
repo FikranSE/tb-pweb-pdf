@@ -323,72 +323,6 @@ app.post('/enroll', requireAuth, function (req, res) {
   });
 });
 
-//add-form page
-app.get('/add-form', requireAuth, function (req, res) {
-  let user_id = req.user_id;
-  const selectUserSql = `SELECT * FROM users WHERE user_id = ${user_id}`;
-  db.query(selectUserSql, (err, Result) => {
-    if (err) throw err;
-    res.render('add-form', {
-      user: Result[0],
-      title: 'add form',
-      layout: 'layouts/main-layout'
-    });
-  });
-})
-
-//detail form
-app.get('/detail-form/:form_id', requireAuth, function(req, res) {
-  const user_id = req.user_id;
-  const form_id = req.params.form_id;
-
-  // check if user is the creator of the form
-  const formSql = 'SELECT * FROM forms WHERE form_id = ?';
-  db.query(formSql, [form_id], function (err, formResult) {
-    if (err) throw err;
-
-    const formCreator = formResult[0].user_id;
-    if (user_id === formCreator) {
-      res.send('You cannot submit your own form');
-      return;
-    }
-
-    // check if user has submitted the form
-    const submissionSql =
-      'SELECT * FROM submissions WHERE form_id = ? AND user_id = ?';
-    db.query(submissionSql, [form_id, user_id], function (
-      err,
-      submissionResult
-    ) {
-      if (err) throw err;
-
-      let isSubmitted = false;
-      let submission = null;
-
-      if (submissionResult.length > 0) {
-        isSubmitted = true;
-        submission = submissionResult[0];
-      }
-
-      const selectUserSql = `SELECT * FROM users WHERE user_id = ${user_id}`;
-
-      db.query(selectUserSql, function (err, userResult) {
-        if (err) throw err;
-
-        res.render('detail-form', {
-          user: userResult[0],
-          form: formResult[0],
-          moment: moment,
-          title: 'Detail form',
-          layout: 'layouts/main-layout',
-          isSubmitted: isSubmitted,
-          submission: submission
-        });
-      });
-    });
-  });
-});
-
 
 //my form page
 app.get('/myForm', requireAuth, function (req, res) {
@@ -543,24 +477,64 @@ app.get('/profil', requireAuth, function (req, res) {
   })
 })
 
-//edit user page
-app.get('/edit-profil',requireAuth, function (req, res) {
-  let user_id = req.user_id;
-  const selectUserSql = `SELECT * FROM users WHERE user_id = ${user_id}`;
-  db.query(selectUserSql, (err, Result) => {
-    if (err) throw err;
-    res.render('edit-profil', {
-      user: Result[0],
-      title: 'edit profil',
-      layout: 'layouts/main-layout'
-    });
-  });
-})
+
 //=========================================================================================================================
 
 //=======================================================================================================================
 //                                                    ILHAM
 //=======================================================================================================================
+//submit form
+app.get('/submit-form/:form_id', requireAuth, function(req, res) {
+  const user_id = req.user_id;
+  const form_id = req.params.form_id;
+
+  // check if user is the creator of the form
+  const formSql = 'SELECT * FROM forms WHERE form_id = ?';
+  db.query(formSql, [form_id], function (err, formResult) {
+    if (err) throw err;
+
+    const formCreator = formResult[0].user_id;
+    if (user_id === formCreator) {
+      res.send('You cannot submit your own form');
+      return;
+    }
+
+    // check if user has submitted the form
+    const submissionSql =
+      'SELECT * FROM submissions WHERE form_id = ? AND user_id = ?';
+    db.query(submissionSql, [form_id, user_id], function (
+      err,
+      submissionResult
+    ) {
+      if (err) throw err;
+
+      let isSubmitted = false;
+      let submission = null;
+
+      if (submissionResult.length > 0) {
+        isSubmitted = true;
+        submission = submissionResult[0];
+      }
+
+      const selectUserSql = `SELECT * FROM users WHERE user_id = ${user_id}`;
+
+      db.query(selectUserSql, function (err, userResult) {
+        if (err) throw err;
+
+        res.render('submit-form', {
+          user: userResult[0],
+          form: formResult[0],
+          moment: moment,
+          title: 'Submit form',
+          layout: 'layouts/main-layout',
+          isSubmitted: isSubmitted,
+          submission: submission
+        });
+      });
+    });
+  });
+});
+
 
 // Handle file upload
 app.post('/submit-form', upload.single('uploaded_file'), requireAuth, (req, res) => {
@@ -652,6 +626,20 @@ app.post('/ganti-password', requireAuth, (req, res) => {
 //=======================================================================================================================
 //                                                    DIO
 //=======================================================================================================================
+//edit user page
+app.get('/edit-profil',requireAuth, function (req, res) {
+  let user_id = req.user_id;
+  const selectUserSql = `SELECT * FROM users WHERE user_id = ${user_id}`;
+  db.query(selectUserSql, (err, Result) => {
+    if (err) throw err;
+    res.render('edit-profil', {
+      user: Result[0],
+      title: 'edit profil',
+      layout: 'layouts/main-layout'
+    });
+  });
+})
+
 // Handle file upload
 app.post('/edit-profil', upload.single('avatar'), requireAuth, (req, res) => {
   let user_id = req.user_id;
@@ -674,6 +662,20 @@ app.post('/edit-profil', upload.single('avatar'), requireAuth, (req, res) => {
     res.redirect('/profil');
   });
 });
+
+//add-form page
+app.get('/add-form', requireAuth, function (req, res) {
+  let user_id = req.user_id;
+  const selectUserSql = `SELECT * FROM users WHERE user_id = ${user_id}`;
+  db.query(selectUserSql, (err, Result) => {
+    if (err) throw err;
+    res.render('add-form', {
+      user: Result[0],
+      title: 'add form',
+      layout: 'layouts/main-layout'
+    });
+  });
+})
 
 // add form post
 app.post('/add-form', requireAuth, function (req, res) {
